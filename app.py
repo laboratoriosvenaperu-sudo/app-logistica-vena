@@ -21,7 +21,7 @@ st.markdown("""
 
         .block-container {
             padding-top: 3rem !important;
-            padding-bottom: 1.5rem !important;
+            padding-bottom: 2rem !important;
             max-width: 98% !important;
             padding-left: 1.5rem !important;
             padding-right: 1.5rem !important;
@@ -29,8 +29,8 @@ st.markdown("""
 
         .titulo-principal {
             text-align: left;
-            font-size: 8rem;
-            font-weight: 800;
+            font-size: 12rem;
+            font-weight: 1000;
             color: #111827;
             letter-spacing: -0.5px;
             margin: 0px;
@@ -38,7 +38,7 @@ st.markdown("""
 
         .subtitulo-principal {
             text-align: left;
-            font-size: 0.75rem;
+            font-size: 0.55rem;
             color: #374151;
             font-weight: 600;
             margin-top: 2px;
@@ -166,8 +166,8 @@ if not st.session_state.autenticado:
 c_title, c_logo, c_user_space = st.columns([4.2, 1.3, 0.5])
 
 with c_title:
-    st.markdown("<h1 class='titulo-principal'>LOGÍSTICA Y FINANZAS</h1>", unsafe_allow_html=True)
-    st.markdown("<p class='subtitulo-principal'>Gestión de Pedidos, Lotes, Facturación y Cobranzas</p>", unsafe_allow_html=True)
+    st.markdown("<h1 class='titulo-principal'>LOGÍSTICA</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='subtitulo-principal'>Gestión de Pedidos, Lotes y Facturación</p>", unsafe_allow_html=True)
 
 with c_logo:
     try:
