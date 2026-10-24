@@ -342,11 +342,13 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
 
     with st.container(border=True):
         if lista_productos:
-            prod_dict = {f"{p['codigo']} - {p['producto']}": p['codigo'] for p in lista_productos}
+            prod_dict = {f"{p['codigo']} - {p['producto']}": p for p in lista_productos}
             prod_sel = st.selectbox("Seleccione el Producto", options=list(prod_dict.keys()), index=None, placeholder="-- Seleccione producto --")
             
             if prod_sel:
-                codigo_elegido = prod_dict[prod_sel]
+                prod_obj = prod_dict[prod_sel]
+                codigo_elegido = prod_obj['codigo']
+                nombre_producto_limpio = prod_obj['producto']
                 
                 col_l1, col_l2 = st.columns(2)
                 with col_l1:
@@ -365,6 +367,7 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
                             payload_lote = {
                                 "id": id_lote_gen,
                                 "codigo_producto": codigo_elegido,
+                                "producto": nombre_producto_limpio,
                                 "n_lote": n_lote_input.strip(),
                                 "cantidad_inicial": int(cantidad_lote),
                                 "stock_actual": int(cantidad_lote),
@@ -390,7 +393,7 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
             st.info("No hay lotes registrados todavía.")
     except Exception as e:
         st.error(f"Error al cargar lotes: {e}")
-
+        
 # ==========================================
 # MÓDULO 3: FACTURACIÓN Y COBRANZAS
 # ==========================================
