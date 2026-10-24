@@ -223,67 +223,84 @@ if menu_logistica == "📦 Gestión de Pedidos":
         else:
             df_pedidos_filtrado = df_pedidos
 
-        st.dataframe(
+        # Configuración de la tabla interactiva con selección de filas habilitada
+        st.write("Seleccione un pedido en la tabla de abajo para ver su detalle de picking y empaque:")
+        
+        evento_seleccion = st.dataframe(
             df_pedidos_filtrado[["n_pedido", "nombre_cliente", "vendedor", "f_req_despacho", "estado_pedido", "total_pedido_importe"]],
-            use_container_width=True
+            use_container_width=True,
+            selection_mode="single-row",
+            on_select="rerun",
+            key="tabla_pedidos_almacen"
         )
 
-        st.markdown("---")
-        st.subheader("Detalle, Exportación y Actualización de Pedido")
+        # Capturar el pedido seleccionado haciendo clic en la tabla
+        filas_seleccionadas = evento_seleccion.get("selection", {}).get("rows", [])
         
-        n_pedidos_opt = [p["n_pedido"] for p in lista_pedidos]
-        pedido_seleccionado = st.selectbox("Seleccione un Pedido para gestionar", options=n_pedidos_opt, index=None, placeholder="-- Seleccione N° de Pedido --")
-        
+        pedido_seleccionado = None
+        if filas_seleccionadas:
+            indice_fila = filas_seleccionadas[0]
+            pedido_seleccionado = df_pedidos_filtrado.iloc[indice_fila]["n_pedido"]
+
         if pedido_seleccionado:
+            st.markdown("---")
+            st.subheader(f"Gestión del Pedido: {pedido_seleccionado}")
+            
             p_info = next((p for p in lista_pedidos if p["n_pedido"] == pedido_seleccionado), None)
             
-            # Tarjetas de información con contraste adecuado (fondo blanco neutral y texto oscuro)
-            col_info1, col_info2 = st.columns(2)
-            with col_info1:
-                with st.container(border=True):
-                    st.markdown(f"**📋 Datos del Cliente**")
-                    st.markdown(f"• **Cliente:** {p_info['nombre_cliente']}")
-                    st.markdown(f"• **Dirección:** {p_info['direccion']} ({p_info['ciudad']})")
-            with col_info2:
-                with st.container(border=True):
-                    st.markdown(f"**🚚 Datos de Despacho**")
-                    st.markdown(f"• **Fecha Req. Despacho:** {p_info['f_req_despacho']}")
-                    st.markdown(f"• **Vendedor:** {p_info['vendedor']}")
-            
-            detalle_res = supabase.table("detalle_pedidos").select("*").eq("n_pedido", pedido_seleccionado).execute()
-            if detalle_res.data:
-                df_detalle = pd.DataFrame(detalle_res.data)[["codigo_producto", "cantidad", "precio_doc", "importe_con_desc"]]
-                st.write("**Ítems del Pedido:**")
-                st.dataframe(df_detalle, use_container_width=True)
+            if p_info:
+                # Tarjetas de información con contraste adecuado (fondo blanco neutral y texto oscuro)
+                col_info1, col_info2 = st.columns(2)
+                with col_info1:
+                    with st.container(border=True):
+                        st.markdown(f"**📋 Datos del Cliente**")
+                        st.markdown(f"• **Cliente:** {p_info['nombre_cliente']}")
+                        st.markdown(f"• **Dirección:** {p_info['direccion']} ({p_info['ciudad']})")
+                with col_info2:
+                    with st.container(border=True):
+                        st.markdown(f"**🚚 Datos de Despacho**")
+                        st.markdown(f"• **Fecha Req. Despacho:** {p_info['f_req_despacho']}")
+                        st.markdown(f"• **Vendedor:** {p_info['vendedor']}")
+                
+                detalle_res = supabase.table("detalle_pedidos").select("*").eq("n_pedido", pedido_seleccionado).execute()
+                if detalle_res.data:
+                    df_detalle = pd.DataFrame(detalle_res.data)[["codigo_producto", "cantidad", "precio_doc", "importe_con_desc"]]
+                    st.write("**Ítems del Pedido (Picking y Packing):**")
+                    st.dataframe(df_detalle, use_container_width=True)
 
-                # Botón de exportación a Excel para Picking
-                output = BytesIO()
-                with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    df_resumen = pd.DataFrame([p_info])
-                    df_resumen.to_excel(writer, sheet_name='Info Pedido', index=False)
-                    df_detalle.to_excel(writer, sheet_name='Detalle Picking', index=False)
-                output.seek(0)
+                    # Botón de exportación a Excel para Picking
+                    output = BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        df_resumen = pd.DataFrame([p_info])
+                        df_resumen.to_excel(writer, sheet_name='Info Pedido', index=False)
+                        df_detalle.to_excel(writer, sheet_name='Detalle Picking', index=False)
+                    output.seek(0)
 
-                st.download_button(
-                    label="📥 Descargar Formato de Picking (Excel)",
-                    data=output,
-                    file_name=f"Picking_Pedido_{pedido_seleccionado}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
+                    st.download_button(
+                        label="📥 Descargar Formato de Picking (Excel)",
+                        data=output,
+                        file_name=f"Picking_Pedido_{pedido_seleccionado}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
+                else:
+                    st.warning("Este pedido no contiene ítems registrados en el detalle.")
 
-            nuevo_estado = st.selectbox("Cambiar Estado del Pedido", options=["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"], index=["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"].index(p_info["estado_pedido"]))
-            
-            if st.button("Actualizar Estado de Logística"):
-                try:
-                    supabase.table("pedidos").update({"estado_pedido": nuevo_estado}).eq("n_pedido", pedido_seleccionado).execute()
-                    st.toast(f"¡Estado del pedido {pedido_seleccionado} actualizado a '{nuevo_estado}'!")
-                    st.rerun()
-                except Exception as err:
-                    st.error(f"Error al actualizar: {err}")
+                estados_posibles = ["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"]
+                idx_actual = estados_posibles.index(p_info["estado_pedido"]) if p_info["estado_pedido"] in estados_posibles else 0
+                
+                nuevo_estado = st.selectbox("Cambiar Estado del Pedido", options=estados_posibles, index=idx_actual)
+                
+                if st.button("Actualizar Estado de Logística"):
+                    try:
+                        supabase.table("pedidos").update({"estado_pedido": nuevo_estado}).eq("n_pedido", pedido_seleccionado).execute()
+                        st.toast(f"¡Estado del pedido {pedido_seleccionado} actualizado a '{nuevo_estado}'!")
+                        st.rerun()
+                    except Exception as err:
+                        st.error(f"Error al actualizar: {err}")
     else:
         st.warning("No hay pedidos registrados en el sistema.")
-
+        
 # ==========================================
 # MÓDULO 2: CONTROL DE INVENTARIOS (LOTES)
 # ==========================================
