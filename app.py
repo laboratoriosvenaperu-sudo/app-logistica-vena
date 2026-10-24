@@ -20,16 +20,16 @@ st.markdown("""
         }
 
         .block-container {
-            padding-top: 1.5rem !important;
-            padding-bottom: 2.5rem !important;
+            padding-top: 3rem !important;
+            padding-bottom: 1.5rem !important;
             max-width: 98% !important;
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
         }
 
         .titulo-principal {
             text-align: left;
-            font-size: 3.5rem;
+            font-size: 8rem;
             font-weight: 800;
             color: #111827;
             letter-spacing: -0.5px;
@@ -38,7 +38,7 @@ st.markdown("""
 
         .subtitulo-principal {
             text-align: left;
-            font-size: 0.95rem;
+            font-size: 0.75rem;
             color: #374151;
             font-weight: 600;
             margin-top: 2px;
