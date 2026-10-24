@@ -264,16 +264,34 @@ if menu_logistica == "📦 Gestión de Pedidos":
                 
                 detalle_res = supabase.table("detalle_pedidos").select("*").eq("n_pedido", pedido_seleccionado).execute()
                 if detalle_res.data:
-                    df_detalle = pd.DataFrame(detalle_res.data)[["codigo_producto", "cantidad", "precio_doc", "importe_con_desc"]]
+                    df_detalle_raw = pd.DataFrame(detalle_res.data)
+                    
+                    # Construir la estructura solicitada para los ítems del pedido
+                    df_detalle = pd.DataFrame()
+                    df_detalle["Código del Producto"] = df_detalle_raw.get("codigo_producto", "")
+                    df_detalle["Descripción"] = df_detalle_raw.get("descripcion", df_detalle_raw.get("producto", ""))
+                    df_detalle["Cantidad en Unidades"] = df_detalle_raw.get("cantidad", 0)
+                    
+                    # Calcular cantidad en docenas (asumiendo 12 unidades por docena si existe la columna)
+                    if "cantidad" in df_detalle_raw.columns:
+                        df_detalle["Cantidad en Docenas"] = df_detalle_raw["cantidad"] / 12.0
+                    else:
+                        df_detalle["Cantidad en Docenas"] = 0.0
+                        
+                    df_detalle["Fecha de Pedido"] = p_info.get("f_pedido", "")
+                    df_detalle["Fecha de Requerimiento de Despacho"] = p_info.get("f_req_despacho", "")
+
                     st.write("**Ítems del Pedido (Picking y Packing):**")
                     st.dataframe(df_detalle, use_container_width=True)
 
-                    # Botón de exportación a Excel para Picking
+                    # DataFrame específico para el Excel (Código del pedido y los campos solicitados del detalle)
+                    df_excel_export = df_detalle.copy()
+                    df_excel_export.insert(0, "N° de Pedido", pedido_seleccionado)
+
+                    # Botón de exportación a Excel para Picking con la estructura solicitada
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        df_resumen = pd.DataFrame([p_info])
-                        df_resumen.to_excel(writer, sheet_name='Info Pedido', index=False)
-                        df_detalle.to_excel(writer, sheet_name='Detalle Picking', index=False)
+                        df_excel_export.to_excel(writer, sheet_name='Detalle Picking', index=False)
                     output.seek(0)
 
                     st.download_button(
