@@ -214,9 +214,11 @@ if menu_logistica == "📦 Gestión de Pedidos":
     if lista_pedidos:
         df_pedidos = pd.DataFrame(lista_pedidos)
         
+        estados_filtro_lista = ["Todos", "En proceso de Alistamiento / picking", "Por Despachar", "En Ruta", "Entregado"]
+        
         col_f1, col_f2 = st.columns([2, 2])
         with col_f1:
-            estado_filtro = st.selectbox("Filtrar por Estado de Pedido", options=["Todos", "Registrado", "En Picking", "En Packing", "Despachado", "Entregado"])
+            estado_filtro = st.selectbox("Filtrar por Estado de Pedido", options=estados_filtro_lista)
         
         if estado_filtro != "Todos":
             df_pedidos_filtrado = df_pedidos[df_pedidos["estado_pedido"] == estado_filtro]
@@ -311,7 +313,7 @@ if menu_logistica == "📦 Gestión de Pedidos":
                 else:
                     st.warning("Este pedido no contiene ítems registrados en el detalle.")
 
-                estados_posibles = ["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"]
+                estados_posibles = ["En proceso de Alistamiento / picking", "Por Despachar", "En Ruta", "Entregado"]
                 idx_actual = estados_posibles.index(p_info["estado_pedido"]) if p_info["estado_pedido"] in estados_posibles else 0
                 
                 nuevo_estado = st.selectbox("Cambiar Estado del Pedido", options=estados_posibles, index=idx_actual)
