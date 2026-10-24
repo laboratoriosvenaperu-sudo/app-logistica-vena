@@ -20,9 +20,9 @@ st.markdown("""
         }
 
         .block-container {
-            padding-top: 2.5rem !important;
-            padding-bottom: 2rem !important;
-            max-width: 98.5% !important;
+            padding-top: 1.5rem !important;
+            padding-bottom: 2.5rem !important;
+            max-width: 98% !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
         }
@@ -163,7 +163,7 @@ if not st.session_state.autenticado:
 # ==========================================
 # 4. ENCABEZADO, LOGO Y MENÚ DE USUARIO
 # ==========================================
-c_title, c_logo, c_user_space = st.columns([3.2, 1.3, 1.2])
+c_title, c_logo, c_user_space = st.columns([4.2, 1.3, 0.5])
 
 with c_title:
     st.markdown("<h1 class='titulo-principal'>LOGÍSTICA Y FINANZAS</h1>", unsafe_allow_html=True)
@@ -171,7 +171,7 @@ with c_title:
 
 with c_logo:
     try:
-        st.image("LOGO VENA.png", width=180)
+        st.image("LOGO VENA.png", width=150)
     except Exception:
         pass
 
