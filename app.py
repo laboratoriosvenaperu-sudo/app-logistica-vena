@@ -269,7 +269,7 @@ if menu_logistica == "📦 Gestión de Pedidos":
                     # Construir la estructura solicitada para los ítems del pedido
                     df_detalle = pd.DataFrame()
                     df_detalle["Código del Producto"] = df_detalle_raw.get("codigo_producto", "")
-                    df_detalle["Descripción"] = df_detalle_raw.get("descripcion", df_detalle_raw.get("producto", ""))
+                    df_detalle["Producto"] = df_detalle_raw.get("producto", df_detalle_raw.get("descripcion", ""))
                     df_detalle["Cantidad en Unidades"] = df_detalle_raw.get("cantidad", 0)
                     
                     # Calcular cantidad en docenas (asumiendo 12 unidades por docena si existe la columna)
@@ -278,7 +278,14 @@ if menu_logistica == "📦 Gestión de Pedidos":
                     else:
                         df_detalle["Cantidad en Docenas"] = 0.0
                         
-                    df_detalle["Fecha de Pedido"] = p_info.get("f_pedido", "")
+                    # Extraer solo la fecha de pedido (sin hora si viene con formato timestamp)
+                    f_pedido_str = str(p_info.get("f_pedido", ""))
+                    if "T" in f_pedido_str:
+                        f_pedido_str = f_pedido_str.split("T")[0]
+                    elif " " in f_pedido_str:
+                        f_pedido_str = f_pedido_str.split(" ")[0]
+
+                    df_detalle["Fecha de Pedido"] = f_pedido_str
                     df_detalle["Fecha de Requerimiento de Despacho"] = p_info.get("f_req_despacho", "")
 
                     st.write("**Ítems del Pedido (Picking y Packing):**")
