@@ -20,7 +20,7 @@ st.markdown("""
         }
 
         .block-container {
-            padding-top: 2rem !important;
+            padding-top: 1.5rem !important;
             padding-bottom: 2rem !important;
             max-width: 98.5% !important;
             padding-left: 2rem !important;
@@ -49,8 +49,8 @@ st.markdown("""
             flex-direction: column;
             align-items: center;
             width: 100%;
-            margin-top: 1rem;
-            margin-bottom: 2rem;
+            margin-top: 0.2rem;
+            margin-bottom: 1rem;
         }
 
         div.row-widget.stRadio > div {
@@ -58,7 +58,7 @@ st.markdown("""
             justify-content: center !important;
             gap: 12px;
             background: #FFFFFF;
-            padding: 10px 20px;
+            padding: 8px 18px;
             border-radius: 12px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
             border: 1px solid #4B5563;
@@ -68,7 +68,7 @@ st.markdown("""
 
         div.row-widget.stRadio label {
             background-color: #F9FAFB !important;
-            padding: 10px 22px !important;
+            padding: 8px 20px !important;
             border-radius: 8px !important;
             font-weight: 600 !important;
             color: #1F2937 !important;
@@ -91,6 +91,15 @@ st.markdown("""
             border-radius: 8px !important;
             border: none !important;
             padding: 0.55rem 1.2rem !important;
+        }
+
+        /* Estilo para el botón de usuario estilo Google en plomo claro */
+        div[data-testid="stPopover"] > button {
+            background-color: #E5E7EB !important;
+            color: #1F2937 !important;
+            border: 1px solid #9CA3AF !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -152,20 +161,27 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================================
-# 4. ENCABEZADO Y MENÚ DE USUARIO (ESTILO GOOGLE)
+# 4. ENCABEZADO, LOGO Y MENÚ DE USUARIO
 # ==========================================
-c_title, c_user_space = st.columns([4, 1.2])
+c_title, c_logo, c_user_space = st.columns([3.2, 1.3, 1.2])
 
 with c_title:
     st.markdown("<h1 class='titulo-principal'>LOGÍSTICA Y FINANZAS</h1>", unsafe_allow_html=True)
     st.markdown("<p class='subtitulo-principal'>Gestión de Pedidos, Lotes, Facturación y Cobranzas</p>", unsafe_allow_html=True)
 
+with c_logo:
+    try:
+        st.image("LOGO VENA.png", width=180)
+    except Exception:
+        pass
+
 with c_user_space:
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
     usuario_nombre = st.session_state.usuario_actual.get('nombre', 'Usuario')
     usuario_rol = st.session_state.usuario_actual.get('rol', 'Colaborador').capitalize()
     iniciales = "".join([n[0] for n in usuario_nombre.split()[:2]]).upper()
     
-    with st.popover(f"👤 {iniciales} - Cuenta"):
+    with st.popover(f"👤 {iniciales} - Cuenta", use_container_width=True):
         st.markdown(f"**{usuario_nombre}**")
         st.markdown(f"<span style='color: #4B5563; font-size: 0.85rem;'>Rol: {usuario_rol}</span>", unsafe_allow_html=True)
         st.markdown("---")
@@ -174,8 +190,6 @@ with c_user_space:
             st.session_state.usuario_actual = None
             st.rerun()
 
-st.markdown("---")
-
 st.markdown('<div class="contenedor-modulos-centrado">', unsafe_allow_html=True)
 menu_logistica = st.radio(
     "Seleccione el módulo:",
@@ -183,7 +197,6 @@ menu_logistica = st.radio(
     horizontal=True
 )
 st.markdown('</div>', unsafe_allow_html=True)
-st.markdown("---")
 
 # ==========================================
 # MÓDULO 1: GESTIÓN DE PEDIDOS (PICKING / PACKING)
@@ -240,7 +253,7 @@ if menu_logistica == "📦 Gestión de Pedidos":
             if st.button("Actualizar Estado de Logística"):
                 try:
                     supabase.table("pedidos").update({"estado_pedido": nuevo_estado}).eq("n_pedido", pedido_seleccionado).execute()
-                    st.toast(f"¡Estado del pedido {pedido_seleccionado} actualizado a '{nuevo_estado}'!", icon="🚀")
+                    st.toast(f"¡Estado del pedido {pedido_seleccionado} actualizado a '{nuevo_estado}'!")
                     st.rerun()
                 except Exception as err:
                     st.error(f"Error al actualizar: {err}")
@@ -292,7 +305,7 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
                                 "estado_lote": "Disponible"
                             }
                             supabase.table("lotes_inventario").insert(payload_lote).execute()
-                            st.toast(f"¡Lote {n_lote_input} registrado con éxito!", icon="📦")
+                            st.toast(f"¡Lote {n_lote_input} registrado con éxito!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error al guardar lote: {e}")
@@ -377,7 +390,7 @@ elif menu_logistica == "💳 Facturación y Cobranzas":
                                 }
                                 
                                 supabase.table("documentos_salida").insert(payload_doc).execute()
-                                st.toast(f"¡Factura {n_factura_txt} emitida con éxito!", icon="🧾")
+                                st.toast(f"¡Factura {n_factura_txt} emitida con éxito!")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Error al emitir factura: {e}")
@@ -441,7 +454,7 @@ elif menu_logistica == "💳 Facturación y Cobranzas":
                                 "estado_factura": nuevo_estado
                             }).eq("n_factura", info_d_sel["n_factura"]).execute()
                             
-                            st.toast(f"¡Pago de S/ {monto_abono:.2f} registrado correctamente!", icon="💰")
+                            st.toast(f"¡Pago de S/ {monto_abono:.2f} registrado correctamente!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error al registrar el pago: {e}")
