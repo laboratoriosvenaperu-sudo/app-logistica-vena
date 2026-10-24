@@ -7,7 +7,7 @@ from supabase import create_client
 # ==========================================
 # 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
 # ==========================================
-st.set_page_config(page_title="Vena Laboratorios - Logística y Finanzas", layout="wide")
+st.set_page_config(page_title="Vena Laboratorios - Logística", layout="wide")
 
 st.markdown("""
     <style>
@@ -20,7 +20,7 @@ st.markdown("""
         }
 
         .block-container {
-            padding-top: 1.5rem !important;
+            padding-top: 2.5rem !important;
             padding-bottom: 2rem !important;
             max-width: 98.5% !important;
             padding-left: 2rem !important;
@@ -29,7 +29,7 @@ st.markdown("""
 
         .titulo-principal {
             text-align: left;
-            font-size: 2.8rem;
+            font-size: 3.5rem;
             font-weight: 800;
             color: #111827;
             letter-spacing: -0.5px;
@@ -134,7 +134,7 @@ if not st.session_state.autenticado:
             
             with st.form("form_login_logistica"):
                 correo_ingresado = st.text_input("Correo Electrónico", placeholder="usuario@avenalaboratorios.com")
-                password_ingresado = st.text_input("Contraseña", type="password", placeholder="")
+                password_ingresado = st.text_input("Contraseña", type="password", placeholder="contraseña")
                 st.markdown("<br>", unsafe_allow_html=True)
                 btn_login = st.form_submit_button("Ingresar al Sistema", use_container_width=True)
                 
