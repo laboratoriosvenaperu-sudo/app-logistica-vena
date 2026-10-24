@@ -20,11 +20,11 @@ st.markdown("""
         }
 
         .block-container {
-            padding-top: 3rem !important;
+            padding-top: 2rem !important;
             padding-bottom: 2rem !important;
             max-width: 98.5% !important;
-            padding-left: 1.5rem !important;
-            padding-right: 1.5rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
         }
 
         .titulo-principal {
@@ -39,7 +39,7 @@ st.markdown("""
         .subtitulo-principal {
             text-align: left;
             font-size: 0.95rem;
-            color: #4B5563;
+            color: #374151;
             font-weight: 600;
             margin-top: 2px;
         }
@@ -61,7 +61,7 @@ st.markdown("""
             padding: 10px 20px;
             border-radius: 12px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            border: 1px solid #9CA3AF;
+            border: 1px solid #4B5563;
             width: fit-content;
             margin: 0 auto;
         }
@@ -71,13 +71,13 @@ st.markdown("""
             padding: 10px 22px !important;
             border-radius: 8px !important;
             font-weight: 600 !important;
-            color: #374151 !important;
-            border: 1px solid #D1D5DB !important;
+            color: #1F2937 !important;
+            border: 1px solid #9CA3AF !important;
             cursor: pointer;
         }
 
         div[data-testid="stVerticalBlock"] > div[style*="border"] {
-            border: 1px solid #9CA3AF !important;
+            border: 1px solid #4B5563 !important;
             border-radius: 12px !important;
             box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.08) !important;
             background-color: #FFFFFF !important;
@@ -120,7 +120,7 @@ if not st.session_state.autenticado:
     with col2:
         with st.container(border=True):
             st.markdown("<h2 style='text-align: center; color: #111827;'>Acceso Logística & Finanzas</h2>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; color: #4B5563; font-size: 0.9rem;'>Laboratorios Vena - Control Operativo</p>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; color: #374151; font-size: 0.9rem;'>Laboratorios Vena - Control Operativo</p>", unsafe_allow_html=True)
             st.markdown("---")
             
             with st.form("form_login_logistica"):
@@ -152,32 +152,29 @@ if not st.session_state.autenticado:
     st.stop()
 
 # ==========================================
-# 4. BARRA LATERAL (Sesión y Salida)
+# 4. ENCABEZADO Y MENÚ DE USUARIO (ESTILO GOOGLE)
 # ==========================================
-with st.sidebar:
-    st.markdown("### 👤 Sesión Activa")
-    st.write(f"**Usuario:** {st.session_state.usuario_actual.get('nombre')}")
-    st.write(f"**Rol:** {st.session_state.usuario_actual.get('rol').capitalize()}")
-    st.markdown("---")
-    if st.button("Cerrar Sesión", use_container_width=True):
-        st.session_state.autenticado = False
-        st.session_state.usuario_actual = None
-        st.rerun()
-
-# ==========================================
-# 5. ENCABEZADO Y MENÚ DE NAVEGACIÓN
-# ==========================================
-c_title, c_logo = st.columns([4, 1])
+c_title, c_user_space = st.columns([4, 1.2])
 
 with c_title:
     st.markdown("<h1 class='titulo-principal'>LOGÍSTICA Y FINANZAS</h1>", unsafe_allow_html=True)
     st.markdown("<p class='subtitulo-principal'>Gestión de Pedidos, Lotes, Facturación y Cobranzas</p>", unsafe_allow_html=True)
 
-with c_logo:
-    try:
-        st.image("LOGO VENA.png", width=200)
-    except Exception:
-        pass
+with c_user_space:
+    usuario_nombre = st.session_state.usuario_actual.get('nombre', 'Usuario')
+    usuario_rol = st.session_state.usuario_actual.get('rol', 'Colaborador').capitalize()
+    iniciales = "".join([n[0] for n in usuario_nombre.split()[:2]]).upper()
+    
+    with st.popover(f"👤 {iniciales} - Cuenta"):
+        st.markdown(f"**{usuario_nombre}**")
+        st.markdown(f"<span style='color: #4B5563; font-size: 0.85rem;'>Rol: {usuario_rol}</span>", unsafe_allow_html=True)
+        st.markdown("---")
+        if st.button("Cerrar Sesión", use_container_width=True):
+            st.session_state.autenticado = False
+            st.session_state.usuario_actual = None
+            st.rerun()
+
+st.markdown("---")
 
 st.markdown('<div class="contenedor-modulos-centrado">', unsafe_allow_html=True)
 menu_logistica = st.radio(
@@ -204,7 +201,6 @@ if menu_logistica == "📦 Gestión de Pedidos":
     if lista_pedidos:
         df_pedidos = pd.DataFrame(lista_pedidos)
         
-        # Filtro rápido por estado
         col_f1, col_f2 = st.columns([2, 2])
         with col_f1:
             estado_filtro = st.selectbox("Filtrar por Estado de Pedido", options=["Todos", "Registrado", "En Picking", "En Packing", "Despachado", "Entregado"])
@@ -234,13 +230,11 @@ if menu_logistica == "📦 Gestión de Pedidos":
             with col_info2:
                 st.success(f"🚚 **Fecha Req. Despacho:** {p_info['f_req_despacho']} \n\n 👤 **Vendedor:** {p_info['vendedor']}")
             
-            # Mostrar ítems del pedido
             detalle_res = supabase.table("detalle_pedidos").select("*").eq("n_pedido", pedido_seleccionado).execute()
             if detalle_res.data:
                 st.write("**Ítems del Pedido:**")
                 st.dataframe(pd.DataFrame(detalle_res.data)[["codigo_producto", "cantidad", "precio_doc", "importe_con_desc"]], use_container_width=True)
 
-            # Actualizar Estado
             nuevo_estado = st.selectbox("Cambiar Estado del Pedido", options=["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"], index=["Registrado", "En Picking", "En Packing", "Despachado", "Entregado"].index(p_info["estado_pedido"]))
             
             if st.button("Actualizar Estado de Logística"):
@@ -439,7 +433,6 @@ elif menu_logistica == "💳 Facturación y Cobranzas":
                             
                             supabase.table("pagos_facturas").insert(payload_pago).execute()
                             
-                            # Actualizar saldo y estado de la factura
                             nuevo_saldo = float(info_d_sel["saldo_pendiente"]) - float(monto_abono)
                             nuevo_estado = "Pagada" if nuevo_saldo <= 0 else "Por Cobrar"
                             
@@ -462,7 +455,6 @@ elif menu_logistica == "💳 Facturación y Cobranzas":
             if docs_all.data:
                 df_docs = pd.DataFrame(docs_all.data)
                 
-                # Métricas rápidas
                 total_por_cobrar = df_docs[df_docs["estado_factura"] == "Por Cobrar"]["saldo_pendiente"].sum()
                 total_facturado = df_docs["importe_total"].sum()
                 
