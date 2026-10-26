@@ -370,7 +370,6 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
                                 "producto": nombre_producto_limpio,
                                 "n_lote": n_lote_input.strip(),
                                 "cantidad_inicial": int(cantidad_lote),
-                                "stock_actual": int(cantidad_lote),
                                 "f_produccion": f_prod.strftime('%Y-%m-%d'),
                                 "f_vencimiento": f_venc.strftime('%Y-%m-%d'),
                                 "estado_lote": "Disponible"
@@ -396,7 +395,31 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
     try:
         lotes_res = supabase.table("lotes_inventario").select("*").execute()
         if lotes_res.data:
-            st.dataframe(pd.DataFrame(lotes_res.data), use_container_width=True)
+            df_lotes = pd.DataFrame(lotes_res.data)
+            
+            # Filtro para buscar por producto (código o descripción)
+            filtro_busqueda_lote = st.text_input("🔍 Buscar por Código o Descripción de Producto", placeholder="Ej. 3010005 o Gel...", key="input_filtro_lotes")
+            
+            if filtro_busqueda_lote:
+                filtro_lower = filtro_busqueda_lote.lower()
+                df_lotes = df_lotes[
+                    df_lotes["codigo_producto"].astype(str).str.lower().str.contains(filtro_lower) | 
+                    df_lotes["producto"].astype(str).str.lower().str.contains(filtro_lower)
+                ]
+
+            # Seleccionar y renombrar las columnas solicitadas
+            cols_disponibles = [col for col in ["codigo_producto", "producto", "n_lote", "cantidad_inicial", "f_produccion", "f_vencimiento", "estado_lote"] if col in df_lotes.columns]
+            df_lotes_mostrar = df_lotes[cols_disponibles].rename(columns={
+                "codigo_producto": "Código Producto",
+                "producto": "Descripción",
+                "n_lote": "N° Lote",
+                "cantidad_inicial": "Cantidad Inicial",
+                "f_produccion": "F. Producción",
+                "f_vencimiento": "F. Vencimiento",
+                "estado_lote": "Estado"
+            })
+
+            st.dataframe(df_lotes_mostrar, use_container_width=True, hide_index=True)
         else:
             st.info("No hay lotes registrados todavía.")
     except Exception as e:
