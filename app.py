@@ -391,39 +391,36 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
             st.warning("No hay productos cargados en la base de datos.")
 
     st.markdown("---")
-    st.subheader("Inventario Actual de Lotes")
+    st.subheader("Inventario Actual")
     try:
-        lotes_res = supabase.table("lotes_inventario").select("*").execute()
-        if lotes_res.data:
-            df_lotes = pd.DataFrame(lotes_res.data)
+        prod_inv_res = supabase.table("productos").select("codigo, producto, stock_actual").execute()
+        if prod_inv_res.data:
+            df_inv = pd.DataFrame(prod_inv_res.data)
             
             # Filtro para buscar por producto (código o descripción)
-            filtro_busqueda_lote = st.text_input("🔍 Buscar por Código o Descripción de Producto", placeholder="Ej. 3010005 o Gel...", key="input_filtro_lotes")
+            filtro_busqueda_inv = st.text_input("🔍 Buscar por Código o Descripción de Producto", placeholder="Ej. 3010005 o Gel...", key="input_filtro_inventario")
             
-            if filtro_busqueda_lote:
-                filtro_lower = filtro_busqueda_lote.lower()
-                df_lotes = df_lotes[
-                    df_lotes["codigo_producto"].astype(str).str.lower().str.contains(filtro_lower) | 
-                    df_lotes["producto"].astype(str).str.lower().str.contains(filtro_lower)
+            if filtro_busqueda_inv:
+                filtro_lower = filtro_busqueda_inv.lower()
+                df_inv = df_inv[
+                    df_inv["codigo"].astype(str).str.lower().str.contains(filtro_lower) | 
+                    df_inv["producto"].astype(str).str.lower().str.contains(filtro_lower)
                 ]
 
-            # Seleccionar y renombrar las columnas solicitadas
-            cols_disponibles = [col for col in ["codigo_producto", "producto", "n_lote", "cantidad_inicial", "f_produccion", "f_vencimiento", "estado_lote"] if col in df_lotes.columns]
-            df_lotes_mostrar = df_lotes[cols_disponibles].rename(columns={
-                "codigo_producto": "Código Producto",
+            df_inv["stock_actual"] = pd.to_numeric(df_inv["stock_actual"], errors="coerce").fillna(0).astype(int)
+
+            cols_disponibles = [col for col in ["codigo", "producto", "stock_actual"] if col in df_inv.columns]
+            df_inv_mostrar = df_inv[cols_disponibles].rename(columns={
+                "codigo": "Código Producto",
                 "producto": "Descripción",
-                "n_lote": "N° Lote",
-                "cantidad_inicial": "Cantidad Inicial",
-                "f_produccion": "F. Producción",
-                "f_vencimiento": "F. Vencimiento",
-                "estado_lote": "Estado"
+                "stock_actual": "Stock Actual"
             })
 
-            st.dataframe(df_lotes_mostrar, use_container_width=True, hide_index=True)
+            st.dataframe(df_inv_mostrar, use_container_width=True, hide_index=True)
         else:
-            st.info("No hay lotes registrados todavía.")
+            st.info("No hay productos registrados todavía.")
     except Exception as e:
-        st.error(f"Error al cargar lotes: {e}")
+        st.error(f"Error al cargar el inventario: {e}")
         
 # ==========================================
 # MÓDULO 3: FACTURACIÓN Y COBRANZAS
