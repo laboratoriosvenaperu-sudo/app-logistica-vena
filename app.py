@@ -193,7 +193,7 @@ with c_user_space:
 st.markdown('<div class="contenedor-modulos-centrado">', unsafe_allow_html=True)
 menu_logistica = st.radio(
     "Seleccione el módulo:",
-    ("📦 Gestión de Pedidos", "🏭 Control de Inventarios (Lotes)", "💳 Facturación y Cobranzas"),
+    ("📦 Gestión de Pedidos", "🏭 Control de Inventarios (Lotes)"),
     horizontal=True
 )
 st.markdown('</div>', unsafe_allow_html=True)
