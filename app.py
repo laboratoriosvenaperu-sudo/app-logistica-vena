@@ -591,18 +591,20 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
     st.subheader("Registro de Nuevos Lotes de Producto Terminado")
     
     try:
-        prod_res = supabase.table("productos").select("codigo, producto").execute()
+        prod_res = supabase.table("productos").select("codigo, producto, stock_actual").execute()
         lista_productos = prod_res.data if prod_res.data else []
     except:
         lista_productos = []
 
     with st.container(border=True):
         if lista_productos:
-            prod_dict = {f"{p['codigo']} - {p['producto']}": p['codigo'] for p in lista_productos}
+            prod_dict = {f"{p['codigo']} - {p['producto']}": p for p in lista_productos}
             prod_sel = st.selectbox("Seleccione el Producto", options=list(prod_dict.keys()), index=None, placeholder="-- Seleccione producto --")
             
             if prod_sel:
-                codigo_elegido = prod_dict[prod_sel]
+                prod_obj = prod_dict[prod_sel]
+                codigo_elegido = prod_obj['codigo']
+                nombre_producto_limpio = prod_obj['producto']
                 
                 col_l1, col_l2 = st.columns(2)
                 with col_l1:
@@ -621,15 +623,23 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
                             payload_lote = {
                                 "id": id_lote_gen,
                                 "codigo_producto": codigo_elegido,
+                                "producto": nombre_producto_limpio,
                                 "n_lote": n_lote_input.strip(),
                                 "cantidad_inicial": int(cantidad_lote),
-                                "stock_actual": int(cantidad_lote),
                                 "f_produccion": f_prod.strftime('%Y-%m-%d'),
                                 "f_vencimiento": f_venc.strftime('%Y-%m-%d'),
                                 "estado_lote": "Disponible"
                             }
                             supabase.table("lotes_inventario").insert(payload_lote).execute()
-                            st.toast(f"¡Lote {n_lote_input} registrado con éxito!")
+
+                            # Sumar la cantidad del nuevo lote al stock_actual en la tabla productos
+                            prod_db = supabase.table("productos").select("stock_actual").eq("codigo", codigo_elegido).execute()
+                            if prod_db.data:
+                                stock_actual_db = int(pd.to_numeric(pd.Series([prod_db.data[0].get("stock_actual", 0)]), errors="coerce").fillna(0).iloc[0])
+                                nuevo_stock_total = stock_actual_db + int(cantidad_lote)
+                                supabase.table("productos").update({"stock_actual": nuevo_stock_total}).eq("codigo", codigo_elegido).execute()
+
+                            st.toast(f"¡Lote {n_lote_input} registrado y stock actualizado con éxito!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error al guardar lote: {e}")
@@ -637,16 +647,37 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
             st.warning("No hay productos cargados en la base de datos.")
 
     st.markdown("---")
-    st.subheader("Inventario Actual de Lotes")
+    st.subheader("Inventario Actual")
     try:
-        lotes_res = supabase.table("lotes_inventario").select("*").execute()
-        if lotes_res.data:
-            st.dataframe(pd.DataFrame(lotes_res.data), use_container_width=True)
-        else:
-            st.info("No hay lotes registrados todavía.")
-    except Exception as e:
-        st.error(f"Error al cargar lotes: {e}")
+        prod_inv_res = supabase.table("productos").select("codigo, producto, stock_actual").execute()
+        if prod_inv_res.data:
+            df_inv = pd.DataFrame(prod_inv_res.data)
+            
+            # Filtro para buscar por producto (código o descripción)
+            filtro_busqueda_inv = st.text_input("🔍 Buscar por Código o Descripción de Producto", placeholder="Ej. 3010005 o Gel...", key="input_filtro_inventario")
+            
+            if filtro_busqueda_inv:
+                filtro_lower = filtro_busqueda_inv.lower()
+                df_inv = df_inv[
+                    df_inv["codigo"].astype(str).str.lower().str.contains(filtro_lower) | 
+                    df_inv["producto"].astype(str).str.lower().str.contains(filtro_lower)
+                ]
 
+            df_inv["stock_actual"] = pd.to_numeric(df_inv["stock_actual"], errors="coerce").fillna(0).astype(int)
+
+            cols_disponibles = [col for col in ["codigo", "producto", "stock_actual"] if col in df_inv.columns]
+            df_inv_mostrar = df_inv[cols_disponibles].rename(columns={
+                "codigo": "Código Producto",
+                "producto": "Descripción",
+                "stock_actual": "Stock Actual"
+            })
+
+            st.dataframe(df_inv_mostrar, use_container_width=True, hide_index=True)
+        else:
+            st.info("No hay productos registrados todavía.")
+    except Exception as e:
+        st.error(f"Error al cargar el inventario: {e}")
+        
 # ==========================================
 # MÓDULO 3: FACTURACIÓN Y COBRANZAS
 # ==========================================
