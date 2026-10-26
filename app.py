@@ -335,7 +335,7 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
     st.subheader("Registro de Nuevos Lotes de Producto Terminado")
     
     try:
-        prod_res = supabase.table("productos").select("codigo, producto").execute()
+        prod_res = supabase.table("productos").select("codigo, producto, stock_actual").execute()
         lista_productos = prod_res.data if prod_res.data else []
     except:
         lista_productos = []
@@ -376,7 +376,15 @@ elif menu_logistica == "🏭 Control de Inventarios (Lotes)":
                                 "estado_lote": "Disponible"
                             }
                             supabase.table("lotes_inventario").insert(payload_lote).execute()
-                            st.toast(f"¡Lote {n_lote_input} registrado con éxito!")
+
+                            # Sumar la cantidad del nuevo lote al stock_actual en la tabla productos
+                            prod_db = supabase.table("productos").select("stock_actual").eq("codigo", codigo_elegido).execute()
+                            if prod_db.data:
+                                stock_actual_db = int(pd.to_numeric(pd.Series([prod_db.data[0].get("stock_actual", 0)]), errors="coerce").fillna(0).iloc[0])
+                                nuevo_stock_total = stock_actual_db + int(cantidad_lote)
+                                supabase.table("productos").update({"stock_actual": nuevo_stock_total}).eq("codigo", codigo_elegido).execute()
+
+                            st.toast(f"¡Lote {n_lote_input} registrado y stock actualizado con éxito!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"Error al guardar lote: {e}")
